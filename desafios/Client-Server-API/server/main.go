@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"io"
 	"io/ioutil"
+	"os"
+	"time"
 )
 
 type MoedaResponse struct {
@@ -25,12 +29,23 @@ type Moeda struct {
 }
 
 func main() {	
-	resp, err := http.Get("https://economia.awesomeapi.com.br/json/last/USD-BRL")
+	
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond * 20000))
+	defer cancel()
+	
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://economia.awesomeapi.com.br/json/last/USD-BRL", nil)
+	//req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080", nil)
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
-	body, error := ioutil.ReadAll(resp.Body)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	defer res.Body.Close()
+	io.Copy(os.Stdout, res.Body)
+	body, error := ioutil.ReadAll(res.Body)
 	if error != nil {
 		panic(err)
 	}
