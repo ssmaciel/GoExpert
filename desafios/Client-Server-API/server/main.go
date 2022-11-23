@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+
 	//"io"
 	"io/ioutil"
 	//"os"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/ssmaciel/GoExpert/desafios/Client-Server-API/server/database"
 	"github.com/ssmaciel/GoExpert/desafios/Client-Server-API/server/internal/entity"
-	
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -31,17 +32,18 @@ type MoedaResponse struct {
 		CreateDate string `json:"create_date"`
 	} `json:"USDBRL"`
 }
+
 func main() {
 	http.HandleFunc("/cotacao", handler)
 	http.ListenAndServe(":8080", nil)
 }
 
-//func main() {
-func handler(w http.ResponseWriter, r *http.Request) {	
-	
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond * 200))
+// func main() {
+func handler(w http.ResponseWriter, r *http.Request) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond*200))
 	defer cancel()
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://economia.awesomeapi.com.br/json/last/USD-BRL", nil)
 	if err != nil {
 		panic(err)
@@ -81,9 +83,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		moedaResponse.USDBRL.Ask,
 		moedaResponse.USDBRL.Timestamp,
 		moedaResponse.USDBRL.CreateDate,
-
 	)
-	moedaDB.Create(moeda)
+	err = moedaDB.Create(moeda)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
