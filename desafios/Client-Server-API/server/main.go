@@ -28,7 +28,12 @@ type Moeda struct {
 		CreateDate string `json:"create_date"`
 }
 
-func main() {	
+func main() {
+	http.HandleFunc("/cotacao", handler)
+	http.ListenAndServe(":8080", nil)
+}
+
+func handler() {	
 	
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond * 20000))
 	defer cancel()
