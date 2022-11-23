@@ -4,17 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"io"
+	//"io"
 	"io/ioutil"
-	"os"
+	//"os"
 	"time"
+
+	"github.com/ssmaciel/GoExpert/desafios/Client-Server-API/server/database"
+	"github.com/ssmaciel/GoExpert/desafios/Client-Server-API/server/internal/entity"
+	
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type MoedaResponse struct {
-	UsdBrl Moeda `json:"USDBRL"`
-}
-
-type Moeda struct {
+	USDBRL struct {
 		Code       string `json:"code"`
 		Codein     string `json:"codein"`
 		Name       string `json:"name"`
@@ -26,20 +29,20 @@ type Moeda struct {
 		Ask        string `json:"ask"`
 		Timestamp  string `json:"timestamp"`
 		CreateDate string `json:"create_date"`
+	} `json:"USDBRL"`
 }
-
 func main() {
 	http.HandleFunc("/cotacao", handler)
 	http.ListenAndServe(":8080", nil)
 }
 
-func handler() {	
+//func main() {
+func handler(w http.ResponseWriter, r *http.Request) {	
 	
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond * 20000))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond * 200))
 	defer cancel()
 	
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://economia.awesomeapi.com.br/json/last/USD-BRL", nil)
-	//req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -49,17 +52,41 @@ func handler() {
 	}
 
 	defer res.Body.Close()
-	io.Copy(os.Stdout, res.Body)
 	body, error := ioutil.ReadAll(res.Body)
 	if error != nil {
 		panic(err)
 	}
-	
-	var m MoedaResponse
-	error = json.Unmarshal(body, &m)
+	var moedaResponse MoedaResponse
+	error = json.Unmarshal(body, &moedaResponse)
 	if error != nil {
 		panic(error)
 	}
-	println(m.UsdBrl)
 	
+	db, err := gorm.Open(sqlite.Open("moeda.db"), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	db.AutoMigrate(&entity.Moeda{})
+
+	moedaDB := database.NewMoeda(db)
+	moeda := entity.NewMoeda(
+		moedaResponse.USDBRL.Code,
+		moedaResponse.USDBRL.Codein,
+		moedaResponse.USDBRL.Name,
+		moedaResponse.USDBRL.High,
+		moedaResponse.USDBRL.Low,
+		moedaResponse.USDBRL.VarBid,
+		moedaResponse.USDBRL.PctChange,
+		moedaResponse.USDBRL.Bid,
+		moedaResponse.USDBRL.Ask,
+		moedaResponse.USDBRL.Timestamp,
+		moedaResponse.USDBRL.CreateDate,
+
+	)
+	moedaDB.Create(moeda)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(moeda)
 }
