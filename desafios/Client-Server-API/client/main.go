@@ -43,16 +43,15 @@ func main() {
 	println(valorStr)
 
 	
-	f, err := os.Create("arquivo.txt")
+	f, err := os.Create("cotacao.txt")
 	if err != nil {
 		panic(err)
 	}
 
-	tamanho, err := f.Write([]byte(valorStr))
+	_, err = f.Write([]byte(valorStr))
 	// tamanho, err := f.WriteString("Hello, World!")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Arquivo criado com sucesso! Tamanho: %d bytes\n", tamanho)
 	f.Close()
 }
