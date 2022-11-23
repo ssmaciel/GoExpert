@@ -61,7 +61,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if error != nil {
 		panic(error)
 	}
-	
+	println(moedaResponse.USDBRL.Codein)
 	db, err := gorm.Open(sqlite.Open("moeda.db"), &gorm.Config{})
 	if err != nil {
 		panic(err)
