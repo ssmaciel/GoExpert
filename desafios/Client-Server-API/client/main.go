@@ -16,7 +16,7 @@ type MoedaResponse struct {
 }
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond * 20000))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond * 300))
 	defer cancel()
 	
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:8080/cotacao", nil)
